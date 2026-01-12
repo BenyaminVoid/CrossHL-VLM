@@ -1,0 +1,6 @@
+*.mat
+*.pt
+*.pkl
+__pycache__/
+.env
+.vscode/
