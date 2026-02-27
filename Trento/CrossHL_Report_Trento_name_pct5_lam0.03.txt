@@ -1,0 +1,15 @@
+OAs for each iteration are:[77.08794012587174]
+AAs for each iteration are:[np.float64(75.4435260934459)]
+KAPPAs for each iteration are:[70.53453040917645]
+
+mean_OA ± std_OA is: 77.08794012587174 ± 0.0
+mean_AA ± std_AA is: 75.4435260934459 ± 0.0
+mean_KAPPA ± std_KAPPA is: 70.53453040917645 ± 0.0
+
+Mean of all elements in confusion matrix: [100.          99.92800576  74.06417112  91.01349091  66.94775613
+  20.70773263]
+Standard deviation of all elements in confusion matrix: [0. 0. 0. 0. 0. 0.]
+
+All values without std: [np.float64(100.0), np.float64(99.92800575953925), np.float64(74.06417112299465), np.float64(91.01349091314528), np.float64(66.94775613065815), np.float64(20.70773263433814), np.float64(77.08794012587174), np.float64(75.4435260934459), np.float64(70.53453040917645)]
+
+All values with std: 100.0 ± 0.0, 99.92800575953925 ± 0.0, 74.06417112299465 ± 0.0, 91.01349091314528 ± 0.0, 66.94775613065815 ± 0.0, 20.70773263433814 ± 0.0, 77.08794012587174 ± 0.0, 75.4435260934459 ± 0.0, 70.53453040917645 ± 0.0, 

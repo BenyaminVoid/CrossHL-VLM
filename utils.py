@@ -29,26 +29,27 @@ def AvgAcc_andEachClassAcc(confusion_matrix):
     average_acc = np.mean(class_acc)
     return class_acc, average_acc
 
-def result_reports(xtest, xtest2, ytest, name, model, iternum):
+def result_reports(xtest, xtest2, ytest, name, model, iternum, device):
     y_pred = np.empty((len(ytest)), dtype=np.float32)
     number = len(ytest) // test_batch_size
-    for i in range(number):
-        temp = xtest[i * test_batch_size:(i + 1) * test_batch_size, :, :]
-        # temp stays on CPU
-        temp1 = xtest2[i * test_batch_size:(i + 1) * test_batch_size, :, :]
-        # temp1 stays on CPU
-        temp2 = model(temp, temp1)
-        temp3 = torch.max(temp2, 1)[1].squeeze()
-        y_pred[i * test_batch_size:(i + 1) * test_batch_size] = temp3.cpu()
-        del temp, temp2, temp3, temp1
 
-    if (i + 1) * test_batch_size < len(ytest):
-        temp = xtest[(i + 1) * test_batch_size:len(ytest), :, :]
-        temp1 = xtest2[(i + 1) * test_batch_size:len(ytest), :, :]
-        temp2 = model(temp, temp1)
-        temp3 = torch.max(temp2, 1)[1].squeeze()
-        y_pred[(i + 1) * test_batch_size:len(ytest)] = temp3.cpu()
-        del temp, temp2, temp3, temp1
+    model.eval()
+    with torch.no_grad():
+        for i in range(number):
+            temp = xtest[i * test_batch_size:(i + 1) * test_batch_size, :, :].to(device)
+            temp1 = xtest2[i * test_batch_size:(i + 1) * test_batch_size, :, :].to(device)
+            temp2 = model(temp, temp1)
+            temp3 = torch.max(temp2, 1)[1].squeeze()
+            y_pred[i * test_batch_size:(i + 1) * test_batch_size] = temp3.detach().cpu().numpy()
+            del temp, temp1, temp2, temp3
+
+        if (i + 1) * test_batch_size < len(ytest):
+            temp = xtest[(i + 1) * test_batch_size:len(ytest), :, :].to(device)
+            temp1 = xtest2[(i + 1) * test_batch_size:len(ytest), :, :].to(device)
+            temp2 = model(temp, temp1)
+            temp3 = torch.max(temp2, 1)[1].squeeze()
+            y_pred[(i + 1) * test_batch_size:len(ytest)] = temp3.detach().cpu().numpy()
+            del temp, temp1, temp2, temp3
 
     y_pred = torch.from_numpy(y_pred).long()
 
