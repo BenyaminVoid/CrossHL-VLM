@@ -73,14 +73,14 @@
 
 \begin{document}
 
-\title{Paper Positioning: Semantic-Physics Regularization for Multimodal HSI--LiDAR Classification}
+\title{Paper Report: Semantic-Physics Regularization for Multimodal HSI--LiDAR Classification}
 
 \author{Benyamin Baharizadeh}
 
 \maketitle
 
 \begin{abstract}
-This report reformulates the thesis direction as a concrete paper-oriented methodology, implementation, and experimental plan. The proposed method keeps the Cross-HL HSI--LiDAR backbone intact and adds a lightweight semantic regularization branch. A frozen CLIP text encoder is used only to build class-level semantic prototypes from physics-guided prompts. CLIP is not used as a classifier, the CLIP image encoder is not used, and hyperspectral data are not converted to RGB. The main contribution is therefore a feasible semantic-physics regularization framework for native multimodal HSI--LiDAR classification, evaluated through baseline, generic prompt, spectral prompt, and spectral+LiDAR prompt ablations. Following the latest technical feedback, the validation plan is extended beyond accuracy to include calibration, statistical generalization, region-level behavior, boundary-region robustness, and interpretability heatmaps.
+This report reformulates the thesis direction as a concrete paper-oriented methodology, implementation, experimental status, and validation plan. The proposed method keeps the Cross-HL HSI--LiDAR backbone intact and adds a lightweight semantic regularization branch. A frozen CLIP text encoder is used only to build class-level semantic prototypes from physics-guided prompts. CLIP is not used as a classifier, the CLIP image encoder is not used, and hyperspectral data are not converted to RGB. The main contribution is therefore a feasible semantic-physics regularization framework for native multimodal HSI--LiDAR classification, evaluated through baseline, generic prompt, spectral prompt, and spectral+LiDAR prompt ablations. Preliminary Trento results show that the baseline is strong and that semantic regularization gives only small, setting-dependent changes in OA. Therefore, the next validation layer must include not only accuracy, but also calibration, statistical generalization, region-level behavior, boundary-region robustness, and interpretability heatmaps.
 \end{abstract}
 
 \section{Purpose of This Update}
@@ -262,7 +262,7 @@ Spectral+LiDAR prompts & 0.543 & 0.670 \\
 \end{tabular}
 \end{table}
 
-The refined physics prompts are substantially more separated than generic class-name prompts. This supports their use as cleaner semantic prototypes for regularization.
+The refined physics prompts are substantially more separated than generic class-name prompts. This supports their use as cleaner semantic prototypes for regularization. However, prototype separation alone is not sufficient to prove improved classification performance; it should be treated as a diagnostic that explains whether the text anchors are likely to provide a useful training signal.
 
 For datasets with many visually or semantically adjacent classes, such as Houston road, highway, railway, and parking classes, the raw CLIP text prototypes can still be highly correlated. In that case, the implementation supports class-wise prototype centering:
 
@@ -273,6 +273,22 @@ For datasets with many visually or semantically adjacent classes, such as Housto
 \end{equation}
 
 This does not change CLIP or the Cross-HL backbone. It only makes the semantic anchors more discriminative before computing the alignment loss.
+
+\begin{table}[t]
+\centering
+\caption{Houston prompt diagnostic for the spectral+LiDAR prompt set. Centering is used because several urban classes have highly correlated raw CLIP text prototypes.}
+\label{tab:houston_centering}
+\begin{tabular}{lcc}
+\toprule
+\textbf{Prototype Setting} & \textbf{Mean Off-Diagonal} & \textbf{Max Off-Diagonal} \\
+\midrule
+Raw spectral+LiDAR & 0.644 & 0.932 \\
+Centered spectral+LiDAR & -0.070 & 0.734 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+This Houston diagnostic motivates the current code option for centered prototypes. It should be reported as an implementation stabilization step, not as a final result. Final conclusions require complete paired runs on Houston and MUUFL.
 
 \section{Ablation Plan}
 
@@ -294,7 +310,7 @@ Spectral+LiDAR & Cross-HL plus semantic loss using both spectral and structural 
 \end{tabularx}
 \end{table}
 
-The first experiments use Trento with 1\%, 5\%, and 10\% labeled data. Multiple random few-shot splits are used. All ablation methods share the same split for each iteration, giving a paired comparison against the baseline.
+The first completed experiments use Trento with 1\%, 5\%, and 10\% labeled data. Multiple random few-shot splits are used. All ablation methods share the same split for each iteration, giving a paired comparison against the baseline. For Houston and MUUFL, the current codebase also supports class-balanced K-shot evaluation, which is more comparable across datasets with different class sizes. A practical starting point is 20 shots per class, followed by 10 and 30 shots if time permits.
 
 The planned metrics are:
 
@@ -310,6 +326,32 @@ The planned metrics are:
     \item negative log-likelihood / log loss and expected calibration error (ECE);
     \item boundary-region and interior-region accuracy.
 \end{itemize}
+
+\section{Preliminary Results and Interpretation}
+
+Table~\ref{tab:prelim_trento} summarizes the current Trento ablation over ten paired few-shot splits. The result should be interpreted carefully. The semantic variants are slightly above the baseline in OA and kappa at 1\%, and the spectral prompt gives a small OA improvement at 5\%. However, the effect is small relative to the split variance, AA does not consistently improve, and the 10\% baseline remains stronger than all semantic variants.
+
+\begin{table*}[t]
+\centering
+\caption{Preliminary Trento ablation summary over 10 paired few-shot splits. Values are mean percentages.}
+\label{tab:prelim_trento}
+\begin{tabular}{lccccccccc}
+\toprule
+\multirow{2}{*}{\textbf{Setting}} & \multicolumn{3}{c}{\textbf{1\% labels}} & \multicolumn{3}{c}{\textbf{5\% labels}} & \multicolumn{3}{c}{\textbf{10\% labels}} \\
+\cmidrule(lr){2-4}\cmidrule(lr){5-7}\cmidrule(lr){8-10}
+ & \textbf{OA} & \textbf{AA} & \textbf{Kappa} & \textbf{OA} & \textbf{AA} & \textbf{Kappa} & \textbf{OA} & \textbf{AA} & \textbf{Kappa} \\
+\midrule
+Baseline & 83.26 & 69.03 & 77.49 & 95.31 & 90.63 & 93.71 & 96.26 & 92.58 & 94.99 \\
+Name & 83.40 & 68.94 & 77.61 & 95.32 & 90.41 & 93.73 & 96.12 & 92.50 & 94.81 \\
+Spectral & 83.42 & 68.95 & 77.62 & 95.33 & 90.45 & 93.75 & 96.12 & 92.52 & 94.80 \\
+Spectral+LiDAR & 83.42 & 68.97 & 77.63 & 95.31 & 90.41 & 93.71 & 96.12 & 92.52 & 94.81 \\
+\bottomrule
+\end{tabular}
+\end{table*}
+
+The main conclusion at this stage is not that the proposed branch already beats the baseline decisively. A more accurate interpretation is that the semantic-regularization pipeline is technically feasible, but the regularization signal must be controlled carefully. The baseline is already strong, and raw CLIP text prototypes can introduce negative transfer when the semantic anchors are too similar or when the semantic loss is applied too strongly. This motivates the current low-lambda variants, delayed semantic loss, warm-up schedule, and prototype-centering option in the codebase.
+
+For the paper narrative, this result is still valuable because it defines the real research question more sharply: under which few-shot, calibration, boundary-region, and interpretability conditions does physics-guided text regularization help a native HSI+LiDAR classifier, and when does it hurt?
 
 \section{Generalization and Calibration Tests}
 
@@ -377,14 +419,16 @@ This direction should be presented as future work or an optional extension unles
 The current implementation is feasible and modular:
 
 \begin{itemize}
-    \item the dataset loader supports HSI and LiDAR patches;
-    \item class-balanced few-shot splits are implemented;
+    \item the dataset loader supports Trento, Houston, and MUUFL HSI+LiDAR patches;
+    \item percentage-based and class-balanced K-shot few-shot splits are implemented;
     \item the Cross-HL model is preserved and reused as the main student backbone;
     \item the VLM branch is a small projection head after the fused CLS feature;
     \item CLIP is frozen and used only for text prototype construction;
+    \item prompt banks are available for name, spectral, and spectral+LiDAR settings across all three datasets;
     \item the training script writes summaries, logs, checkpoints, confusion matrices, and prompt similarity;
     \item the analysis script computes aggregate metrics, paired baseline deltas, and t-SNE plots;
-    \item CUDA execution, mixed precision, K-shot evaluation, delayed semantic loss, and centered prototypes are supported.
+    \item CUDA execution, mixed precision, TF32 acceleration, K-shot evaluation, delayed semantic loss, lambda warm-up, low-lambda variants, and centered prototypes are supported;
+    \item the showcase notebook can run Trento, Houston, and MUUFL ablations from a single interface.
 \end{itemize}
 
 \section{Positioning Table for the Paper}
@@ -466,16 +510,19 @@ The next review should focus on progress toward a paper-ready story:
     \item show the corrected architecture diagram;
     \item state clearly that Cross-HL remains the classifier;
     \item show the prompt similarity table;
+    \item show the preliminary Trento table and state that the baseline is strong;
+    \item explain that current semantic gains are small and setting-dependent, so the method needs controlled regularization rather than stronger claims;
+    \item show the Houston prototype-centering diagnostic;
     \item show the ablation plan;
     \item show the extended validation plan: calibration, boundary/interior testing, and heatmaps;
     \item show the draft positioning table;
-    \item report any valid Trento results if the run is complete.
+    \item report whether Houston and MUUFL K-shot runs are complete.
 \end{itemize}
 
 The recommended spoken summary is:
 
 \begin{quote}
-The current implementation makes the method concrete and feasible. The Cross-HL backbone remains intact. The model adds only a lightweight semantic branch after the fused HSI+LiDAR feature. CLIP is frozen and used only to encode physics-guided prompts into class prototypes. The main ablation compares baseline Cross-HL against name prompts, spectral prompts, and spectral+LiDAR prompts under few-shot settings. The prompts are refined so the text prototypes are more separated in CLIP space. Beyond OA, the next validation layer will test calibration, boundary-region behavior, and interpretability heatmaps on ground-truth regions.
+The current implementation makes the method concrete and feasible. The Cross-HL backbone remains intact. The model adds only a lightweight semantic branch after the fused HSI+LiDAR feature. CLIP is frozen and used only to encode physics-guided prompts into class prototypes. The first Trento results show that the baseline is already strong: semantic prompts give small improvements in the lowest-shot settings but do not consistently outperform the baseline, especially at 10\%. This means the next step is to control the semantic signal through low lambda, delayed loss, and centered prototypes, then evaluate not only OA but also calibration, boundary-region behavior, and interpretability heatmaps on ground-truth regions.
 \end{quote}
 
 \section{Expected Contribution}
@@ -487,6 +534,7 @@ The expected contribution can be stated as follows:
     \item a prompt design strategy that includes both spectral/material and LiDAR structural attributes;
     \item an ablation protocol comparing baseline, generic prompts, spectral prompts, and spectral+LiDAR prompts;
     \item a paired evaluation procedure for few-shot HSI--LiDAR classification;
+    \item an empirical analysis of when semantic regularization helps, when it is neutral, and when it can cause negative transfer;
     \item an extended validation protocol including calibration, boundary/interior analysis, and heatmap-based interpretability;
     \item a future path toward broader multimodal generalization and causal explainability, after validating the HSI+LiDAR case.
 \end{enumerate}
@@ -496,19 +544,20 @@ The expected contribution can be stated as follows:
 The immediate next steps are:
 
 \begin{enumerate}
-    \item finish the Trento ablation for 1\%, 5\%, and 10\% labeled data;
-    \item analyze paired deltas against the baseline;
+    \item complete Houston and MUUFL K-shot ablations using centered prototypes, delayed semantic loss, and low-lambda variants;
+    \item re-run or extend Trento with the stabilized semantic settings if time permits;
+    \item analyze paired deltas against the baseline for all datasets;
     \item generate confusion matrices and t-SNE visualizations;
     \item add macro-F1, micro-F1, MCC, log loss, and ECE to the analysis;
     \item implement a boundary-versus-interior split from the ground-truth map;
     \item generate Grad-CAM-style heatmaps for selected ground-truth patches;
     \item complete the literature positioning table with verified papers;
-    \item extend the same protocol to Houston and MUUFL.
+    \item document negative-transfer cases clearly rather than hiding them, since they motivate the stabilization choices.
 \end{enumerate}
 
 \section{Conclusion}
 
-The current work is now positioned as a feasible paper-oriented methodology rather than only a broad idea. The proposed CrossHL-VLM framework keeps native HSI and LiDAR processing intact, preserves the Cross-HL classification head, and uses a frozen VLM text encoder only as a semantic regularizer. The refined prompts are physically motivated and can be further stabilized through prototype centering and delayed semantic loss. The immediate priority is to validate whether this semantic-physics regularization improves few-shot stability, class separability, calibration, boundary-region behavior, or interpretability indicators on standard HSI+LiDAR datasets.
+The current work is now positioned as a feasible paper-oriented methodology rather than only a broad idea. The proposed CrossHL-VLM framework keeps native HSI and LiDAR processing intact, preserves the Cross-HL classification head, and uses a frozen VLM text encoder only as a semantic regularizer. The preliminary Trento results show that the baseline remains very competitive and that semantic regularization is not automatically beneficial. This is an important finding: the semantic branch must be treated as a controlled regularizer, not as a guaranteed accuracy booster. The refined prompts, prototype centering, delayed semantic loss, and low-lambda settings provide a practical route for reducing negative transfer. The immediate priority is to validate whether this semantic-physics regularization improves few-shot stability, class separability, calibration, boundary-region behavior, or interpretability indicators on Trento, Houston, and MUUFL.
 
 \begin{thebibliography}{99}
 
