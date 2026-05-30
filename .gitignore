@@ -1,0 +1,43 @@
+# Python
+__pycache__/
+*.py[cod]
+*.pyo
+.pytest_cache/
+
+# Virtual environments
+.venv/
+venv/
+env/
+.env
+
+# Jupyter
+.ipynb_checkpoints/
+
+# Local datasets
+Trento/
+Trento11x11/
+HoustonDataset/
+MUUFL_Dataset/
+
+# Experiment outputs
+runs/
+results/
+checkpoints/
+*.pkl
+*.pt
+*.pth
+*.ckpt
+
+# Generated figures and bulky artifacts
+*.eps
+*.png
+*.jpg
+*.jpeg
+*.tif
+*.tiff
+*.mat
+
+# Editor/local files
+.vscode/
+.DS_Store
+Thumbs.db
